@@ -18,6 +18,8 @@ interface AttendanceRecord {
   id: number
   employeeId: number
   date: string
+  checkIn: string | null
+  checkOut: string | null
   status: string
   workHours: number | null
   employee: Employee

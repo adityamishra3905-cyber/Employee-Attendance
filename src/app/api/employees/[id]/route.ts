@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma'
 // GET /api/employees/[id] - Get employee by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const employee = await prisma.employee.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         attendances: {
           orderBy: { date: 'desc' },
@@ -37,14 +38,15 @@ export async function GET(
 // PUT /api/employees/[id] - Update employee
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const { firstName, lastName, email, phone, department, position, isActive } = body
 
     const employee = await prisma.employee.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: {
         firstName,
         lastName,
@@ -59,7 +61,7 @@ export async function PUT(
     return NextResponse.json(employee)
   } catch (error) {
     console.error('Error updating employee:', error)
-    if (error.code === 'P2025') {
+    if (error instanceof Object && 'code' in error && error.code === 'P2025') {
       return NextResponse.json(
         { error: 'Employee not found' },
         { status: 404 }
@@ -75,18 +77,19 @@ export async function PUT(
 // DELETE /api/employees/[id] - Delete employee (soft delete)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const employee = await prisma.employee.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: { isActive: false },
     })
 
     return NextResponse.json({ message: 'Employee deactivated successfully' })
   } catch (error) {
     console.error('Error deactivating employee:', error)
-    if (error.code === 'P2025') {
+    if (error instanceof Object && 'code' in error && error.code === 'P2025') {
       return NextResponse.json(
         { error: 'Employee not found' },
         { status: 404 }
